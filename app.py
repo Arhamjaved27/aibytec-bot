@@ -26,7 +26,7 @@ WEBSITE_URL = os.getenv("WEBSITE_URL")
 # Functions and Rest of the Script
 # ----------------------
 
-PDF_PATH = "./aibytec data2.pdf"
+PDF_PATH = "./aibytec data.pdf"
 
 # Function to send email
 def send_email(name, email, contact_no, area_of_interest):
