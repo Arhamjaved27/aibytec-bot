@@ -246,7 +246,7 @@ elif st.session_state['page'] == 'chat':
 
     if user_input:
         temp = 0
-        last_displayed_message = None
+        latest_message = None
         Conversation_send(user_input)
         time.sleep(2) 
         # Display bot's response
