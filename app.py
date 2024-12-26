@@ -8,7 +8,8 @@ from bs4 import BeautifulSoup
 import openai
 import os
 from dotenv import load_dotenv
-
+from twilio.rest import Client  # type: ignore # Import Twilio Client
+import time
 
 # ----------------------
 # Load Environment Variables
@@ -19,14 +20,68 @@ SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
+PDF_PATH = os.getenv("PDF_PATH")
 WEBSITE_URL = os.getenv("WEBSITE_URL")
 
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN =  os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_NUMBER= os.getenv("TWILIO_WHATSAPP_NUMBER")
+USER_WHATSAPP_NUMBER = os.getenv("USER_WHATSAPP_NUMBER")
+
+
+
+# Flask API endpoints
+# API_URL_MESSAGES = os.getenv("API_URL_MESSAGES")
+# API_URL_NEW_MESSAGES = os.getenv("API_URL_NEW_MESSAGES")
+
+API_URL_LATEST_MESSAGE = "https://aibytec-bot-4da4777c8a3f.herokuapp.com/api/messages"
+API_URL_NEW_MESSAGE = "https://aibytec-bot-4da4777c8a3f.herokuapp.com/api/has_new_messages"
+
+
 # ----------------------
-# Functions and Rest of the Script
+# Functions
 # ----------------------
 
-PDF_PATH = "./aibytec data.pdf"
+def Conversation_send(message):
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    try:
+        client.messages.create(
+            body=message,
+            from_= TWILIO_WHATSAPP_NUMBER,
+            to=USER_WHATSAPP_NUMBER
+        )
+        # st.success("WhatsApp message sent successfully!")
+    except Exception as e:
+        st.error(f"Error sending WhatsApp message: {e}")
+
+def fetch_latest_message():
+    try:
+        response = requests.get(API_URL_LATEST_MESSAGE)
+        if response.status_code == 200:
+            latest_message = response.json()
+            return latest_message
+        else:
+            st.error(f"Error fetching the latest message: {response.status_code}")
+            return {}
+    except Exception as e:
+        st.error(f"Error: {e}")
+        return {}
+
+# Function to check if there is a new message
+def has_new_message():
+    try:
+        response = requests.get(API_URL_NEW_MESSAGE)
+        if response.status_code == 200:
+            return response.json().get("new_message", False)
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
+
+
+
 
 # Function to send email
 def send_email(name, email, contact_no, area_of_interest):
@@ -53,6 +108,7 @@ def send_email(name, email, contact_no, area_of_interest):
         st.success("Email sent successfully!")
     except Exception as e:
         st.error(f"Error sending email: {e}")
+
 
 # Function to extract PDF text
 def extract_pdf_text(file_path):
@@ -88,6 +144,8 @@ def chat_with_ai(user_question, website_text, pdf_text, chat_history):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
+            max_tokens=256,
+            temperature=0.7,
             stream=False
         )
         return response['choices'][0]['message']['content']
@@ -110,55 +168,20 @@ if "chat_history" not in st.session_state:
 # PAGE 1: User Info Form
 # ----------------------
 if st.session_state['page'] == 'form':
-    st.markdown('<p style="font-size: 21px;"><b>Hi! Welcome to AIByTec</b></p>', unsafe_allow_html=True)
-    
+
     with st.form(key="user_form"):
         name = st.text_input("Name")
         email = st.text_input("Email")
         contact_no = st.text_input("Contact No.")
         area_of_interest = st.text_input("Area of Interest")
-
-        # Add custom CSS for alignment
-        st.markdown("""
-            <style>
-            .button-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            .custom-button {
-                padding: 10px 20px;
-                background-color: #007BFF;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            </style>
-        """, unsafe_allow_html=True)
         
-        # # Use HTML to wrap buttons in the container
-        # st.markdown("""
-        #     <div class="button-container">
-        #         <button class="custom-button">Submit</button>
-        #         <button class="custom-button" style="margin-left: 10px;">Cancel</button>
-        #     </div>
-        # """, unsafe_allow_html=True)
-
-        with st.container():
-            # Create three columns for alignment
-            col1, col2, col3 = st.columns([1, 1, 1])  # Adjust proportions as needed
-            
-            # Place the button in the desired column
-            with col1:
-                submitted = st.form_submit_button("Proceed to Chat ")
-            
-            with col2:
-                continue_chat = st.form_submit_button(" Skip and Join Chat")
-            
-            with col3:
-                st.write("")  # Empty to balance alignment
-                    
+        # Create two columns for buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted = st.form_submit_button("Proceed to Chat ")
+        with col2:
+            continue_chat = st.form_submit_button(" Skip and Join Chat")
+        
         if submitted:
             if name and email and contact_no and area_of_interest:
                 send_email(name, email, contact_no, area_of_interest)
@@ -179,17 +202,18 @@ elif st.session_state['page'] == 'chat':
     # Display chat history without headings
     for entry in st.session_state['chat_history']:
         # User Message
+        iconuser = "👤"
+        iconbot = "🤖"
         st.markdown(
             f"""
-            <div style="
-                background-color: #78bae4; 
-                padding: 10px; 
-                border-radius: 10px; 
-                margin-bottom: 10px;
-                width: fit-content;
-                max-width: 80%;
-            ">
-                {entry['user']}
+            </div>
+            <div style='display: flex; justify-content: right; margin-bottom: 10px;'>
+            <div style='display: flex; align-items: center; max-width: 70%; 
+                        background-color: #78bae4; color:rgb(255, 255, 255); 
+                        padding: 10px; border-radius: 10px;'>
+                <span style='margin-right: 10px;'>{iconuser}</span>  <!-- Icon -->
+                <span>{entry['user']}</span>
+            </div>
             </div>
             """, 
             unsafe_allow_html=True
@@ -198,16 +222,16 @@ elif st.session_state['page'] == 'chat':
         # Assistant Message
         st.markdown(
             f"""
-            <div style="
-                background-color:  #D3D3D3; 
-                padding: 10px; 
-                border-radius: 10px; 
-                margin-bottom: 10px;
-                margin-left: auto;
-                width: fit-content;
-                max-width: 80%;
-            ">
-                {entry['bot']}
+            </div>
+            <div style='display: flex; justify-content: left; margin-bottom: 10px;'>
+            <div style='display: flex; align-items: center; max-width: 70%; 
+                        background-color: #A9A9A9; color:rgb(255, 255, 255); 
+                        padding: 10px; border-radius: 10px;'>
+                <span style='margin-right: 10px;'>{iconbot}</span>  <!-- Icon -->
+                <span>{entry['bot']}</span>
+            </div>
+            </div>
+                
             </div>
             """, 
             unsafe_allow_html=True
@@ -221,12 +245,28 @@ elif st.session_state['page'] == 'chat':
     user_input = st.chat_input("Type your question here...", key="user_input_fixed")
 
     if user_input:
+        temp = 0
+        last_displayed_message = None
+        Conversation_send(user_input)
+        time.sleep(2) 
         # Display bot's response
         with st.spinner("Generating response..."):
-            bot_response = chat_with_ai(user_input, website_text, pdf_text, st.session_state['chat_history'])
-        
+            # bot_response = chat_with_ai(user_input, website_text, pdf_text, st.session_state['chat_history'])
+            try:
+                if has_new_message():
+                    latest_message = fetch_latest_message()
+            except Exception as e:
+                st.error(f"Error generating response: {e}")
+
         # Append user query and bot response to chat history
-        st.session_state['chat_history'].append({"user": user_input, "bot": bot_response})
+        st.session_state['chat_history'].append({"user": user_input, "bot": latest_message["body"]})
         
         # Re-run to display updated chat history
         st.rerun()
+
+
+
+
+
+
+
