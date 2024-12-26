@@ -246,20 +246,24 @@ elif st.session_state['page'] == 'chat':
 
     if user_input:
         temp = 0
-        message = []
+        # message = []
         Conversation_send(user_input)
         time.sleep(2) 
         # Display bot's response
         with st.spinner("Generating response..."):
-            # bot_response = chat_with_ai(user_input, website_text, pdf_text, st.session_state['chat_history'])
-            if has_new_message():
-                latest_message = fetch_latest_message()
-                message = latest_message
+                # bot_response = chat_with_ai(user_input, website_text, pdf_text, st.session_state['chat_history'])
+            while temp ==0:
+                if has_new_message():
+                    latest_message = fetch_latest_message()
+                    # message = latest_message
+                    temp = 1
+                else:
+                    temp = 0
                 
 
-        if message:
+        # if latest_message:
             # Append user query and bot response to chat history
-            st.session_state['chat_history'].append({"user": user_input, "bot": message["body"]})
+        st.session_state['chat_history'].append({"user": user_input, "bot": latest_message["body"]})
         
         # Re-run to display updated chat history
         st.rerun()
@@ -270,3 +274,4 @@ elif st.session_state['page'] == 'chat':
 
 
 
+message
