@@ -254,12 +254,12 @@ elif st.session_state['page'] == 'chat':
             # bot_response = chat_with_ai(user_input, website_text, pdf_text, st.session_state['chat_history'])
             if has_new_message():
                 latest_message = fetch_latest_message()
-                message = latest_message["body"]
+                message = latest_message
                 
 
 
         # Append user query and bot response to chat history
-        st.session_state['chat_history'].append({"user": user_input, "bot": message})
+        st.session_state['chat_history'].append({"user": user_input, "bot": message["body"]})
         
         # Re-run to display updated chat history
         st.rerun()
