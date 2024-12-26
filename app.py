@@ -257,9 +257,9 @@ elif st.session_state['page'] == 'chat':
                 message = latest_message
                 
 
-
-        # Append user query and bot response to chat history
-        st.session_state['chat_history'].append({"user": user_input, "bot": message["body"]})
+        if message:
+            # Append user query and bot response to chat history
+            st.session_state['chat_history'].append({"user": user_input, "bot": message["body"]})
         
         # Re-run to display updated chat history
         st.rerun()
