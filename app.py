@@ -267,11 +267,3 @@ elif st.session_state['page'] == 'chat':
         
         # Re-run to display updated chat history
         st.rerun()
-
-
-
-
-
-
-
-message
