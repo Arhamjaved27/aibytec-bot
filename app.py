@@ -212,7 +212,7 @@ elif st.session_state['page'] == 'chat':
                         background-color: #78bae4; color:rgb(255, 255, 255); 
                         padding: 10px; border-radius: 10px;'>
                 <span>{entry['user']}</span>
-                <span style='margin-right: 10px;'>{iconuser}</span>  <!-- Icon -->
+                <span style='margin-left: 10px;'>{iconuser}</span>  <!-- Icon -->
 
             </div>
             </div>
