@@ -211,8 +211,9 @@ elif st.session_state['page'] == 'chat':
             <div style='display: flex; align-items: center; max-width: 70%; 
                         background-color: #78bae4; color:rgb(255, 255, 255); 
                         padding: 10px; border-radius: 10px;'>
-                <span style='margin-right: 10px;'>{iconuser}</span>  <!-- Icon -->
                 <span>{entry['user']}</span>
+                <span style='margin-right: 10px;'>{iconuser}</span>  <!-- Icon -->
+
             </div>
             </div>
             """, 
